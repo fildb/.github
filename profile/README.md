@@ -2,7 +2,7 @@
 
 **FiloDataBroker** is a platform that provides data owners with an additional monetisation channel for their data for use in LLM applications.
 
-The service enables export of data using specific tools, storage of public and private data chunks as separate files on Filecoin, NFT-gated access to encrypted private data, and on-chain datasets registry. The system includes automatic dataset preservation fees and guaranteed 7-day storage availability for the data access buyers (LLM applications).
+The service enables export of data using specific tools, external data storage infrastructure using Filecoin, and data access monetization.
 
 ## The problem it solves
 
@@ -19,45 +19,33 @@ Since the Filecoin Onchain Services (formely Filecoin Web Services) are in their
 3. No access control management for the data reading
 4. No data access log for auditing purposes
 
-Additionally, there are some concept-specific obstacles:
-
-1. No well-established standard for integrating micro-payments into AI chat workflow
-2. SQL-like querying of CSV data requires loading the whole dataset into an MCP server memory
-
-We've managed to mitigate all that by either implementing or planning appropriate workarounds. 
-
 ## Technologies we used
 
 1. **Filecoin**: PandoraService, PDP payment rails, Filecoin Web Services, Synapse SDK, USDFC.
-1. **FilCDN**: for realtime data retrieval
-1. **ERC721** for NFT-gated access on the Filecoin EVM
-1. **Lit Protocol** for encryption keys storage
-1. **MCP protocol** for integration with AI applications
-1. **AlaSQL** for querying CSV data with SQL
+1. **FilCDN**: for instant data availability
+1. **LLMs.txt standard**: for integrating with LLM/AI applications
+1. **HTTP 402**: for monetizing access to the data
 
 ## How we built it
 
-The idea was proposed in the "call for startups" document shared during the PL_Genesis hackathon. Originally, it was proposed as a WordPress plugin but we've decided to go with more generic CSV data source for the hackathon-grade PoC implementation.
+The idea was proposed in the "call for startups" document shared during the PL_Genesis hackathon.
 
-We split the implementation into three projects:
+The system consists of several components:
 
-1. EVM backend - on-chain datasets registry + custom PandoraService fork with fine grained control over the datasets storage lockup period
-1. CLI tool - can be executed in the same infrastructure where original data resides, guides user to select public/private data chunks, encrypts private data with encryption keys securely stored with Lit protocol and uploads both to the Filecoin via Synapse SDK
-1. MCP server - reads dataset registry from on-chain registry, provide tools for searching for and in the datasets, uses Synapse SDK to fetch the data and Lit protocol to retrieve encryption keys for decrypting
+1. FDB backend - integrates with Filecoin via Synapse SDK. Handles ACL, datasets management, billing and payout management with USDFC token on Filecoin blockchain.
+2. WordPress plugin - provides UI for the website administrators to set up what data they want to share, integrates with the FDB backend for the data uploading, generates llms.txt file for LLM/AI applications
+3. FDB CDN - wraps FilCDN by introducing monetization using HTTP 402 header.
 
 ## What we learned
 
-- PDP deals system is a powerful framework for customising data storate SLAs for virtually any project needs
+- PDP deals system is a powerful framework for customizing data storate SLAs for virtually any project needs
 - Synapse SDK is a great interface for building on top of the Filecoin Onchain Cloud
-- CLI tool will not satisfy target audience, so we need to provide more conventien tool (possibly, with web UI)
-- To find PMF we need to narrow down the target audience
+- To find PMF we need to narrow down the target audience to the clearly reachable community
 
 ## What's next for
 
 We must find the PMF - that's our priority #1 right now.
 
-To reach the potential target audience, we are planning to create a WordPress plugin that will support exporting data using a convenient web UI for non-technical users. The first version of the plugin will not have all features, but will enable us to establish a direct communication channel with the target audience.
+We are planning to use the WordPress plugin for reaching our target audience directly. The first version of the plugin doesn't not have all features planned and we're planning to adding them incrementally.
 
-We also need to find a way to accept micro-payments on the MCP server, instead of asking LLM application users to grant our MCP server access to their EOA private key.
-
-We want to log the data access events on-chain for auditing purposes.
+We also need to find a way to accept micro-payments via HTTP protocol. Our current vision is to utilize HTTP 402 response header instructing LLM/AI applications how to pay with USDFC token. Further research is needed to clarify the actual implementation details.
